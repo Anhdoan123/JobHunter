@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,15 +16,22 @@ import vn.anhdoan.jobhunter.domain.RestResponse;
 
 @RestControllerAdvice
 public class GlobalException {
-    @ExceptionHandler(value = IdInvalidException.class)
-    public ResponseEntity<RestResponse> handleIdException(IdInvalidException idInvalidException) {
+    @ExceptionHandler(value = {
+            // Lỗi khi kh tìm thấy người dùng
+            UsernameNotFoundException.class,
+            // Lỗi khi sai mật khẩu
+            BadCredentialsException.class
+    })
+    public ResponseEntity<RestResponse> handleLoginException(Exception ex) {
         RestResponse res = new RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        res.setError("Id Invalid Exception");
-        res.setMessage(idInvalidException.getMessage());
+        res.setError("Thông tin đăng nhập không hợp lệ");
+        res.setMessage(ex.getMessage());
         return ResponseEntity.badRequest().body(res);
     }
 
+    // Khi validation bắt lỗi sẽ trả ra lỗi MethodArgumentNotValidException
+    // Bắt lỗi MethodArgumentNotValidException để custom lỗi
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     public ResponseEntity<RestResponse> validationError(
             MethodArgumentNotValidException methodArgumentNotValidException) {
